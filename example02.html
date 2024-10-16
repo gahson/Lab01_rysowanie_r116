@@ -284,12 +284,12 @@
 
                 //Add ground
                 var groundGeometry = new THREE.PlaneGeometry(30, 20); // Ustawienia rozmiaru podłogi
-var groundMaterial = new THREE.MeshBasicMaterial({ color: 0x00FF00, side: THREE.DoubleSide }); // Zielony kolor podłogi
-var groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
-groundMesh.rotation.x = -Math.PI / 2; // Obrót podłogi, aby była pozioma
-groundMesh.position.y = -3; // Ustawienie pozycji podłogi
-groundMesh.position.z = -6;
-scene.add(groundMesh); // Dodanie podłogi do sceny
+                var groundMaterial = new THREE.MeshBasicMaterial({ color: 0x006400, side: THREE.DoubleSide }); // Zielony kolor podłogi
+                var groundMesh = new THREE.Mesh(groundGeometry, groundMaterial);
+                groundMesh.rotation.x = -Math.PI / 2; // Obrót podłogi, aby była pozioma
+                groundMesh.position.y = -3; // Ustawienie pozycji podłogi
+                groundMesh.position.z = -6;
+                scene.add(groundMesh); // Dodanie podłogi do sceny
 
 
                 
