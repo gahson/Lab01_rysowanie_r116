@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lab 02.01 - Enhanced Scene with Animated Objects and Lighting</title>
+  <script type="text/javascript" src="../three.js"></script>
+  <script type="text/javascript" src="jquery-1.9.0.js"></script>
+  <script type="text/javascript" src="stats.js"></script>
+  <script type="text/javascript" src="dat.gui.js"></script>
+  <script type="text/javascript" src="OrbitControls.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="Stats-output"></div>
+  <div id="WebGL-output"></div>
+  <script type="text/javascript">
+    const stats = initStats();
+
+    const scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setClearColor(new THREE.Color(0x000022)); // Dark blue background for night effect
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    const ctr = new THREE.OrbitControls(camera, renderer.domElement);
+
+    const planeGeometry = new THREE.PlaneGeometry(100, 100, 15, 20);
+    const planeMaterial = new THREE.MeshPhongMaterial({ color: 0x222222, side: THREE.DoubleSide });
+    const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+    plane.receiveShadow = true;
+    plane.rotation.x = -0.5 * Math.PI;
+    plane.position.y = -1;
+    scene.add(plane);
+
+    const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
+    const cubeMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    cube.castShadow = true;
+    cube.position.set(-4, 3, 0);
+    scene.add(cube);
+
+    const sphereGeometry = new THREE.SphereGeometry(4, 20, 20);
+    const sphereMaterial = new THREE.MeshPhongMaterial({ color: 0x7777ff });
+    const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    sphere.castShadow = true;
+    sphere.position.set(20, 0, 2);
+    scene.add(sphere);
+
+    const torusGeometry = new THREE.TorusGeometry(3, 1, 16, 100);
+    const torusMaterial = new THREE.MeshPhongMaterial({ color: 0xffff00 });
+    const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+    torus.castShadow = true;
+    torus.position.set(0, 5, -10);
+    scene.add(torus);
+
+    const cylinderGeometry = new THREE.CylinderGeometry(2, 2, 6, 32);
+    const cylinderMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+    const cylinder = new THREE.Mesh(cylinderGeometry, cylinderMaterial);
+    cylinder.castShadow = true;
+    cylinder.position.set(-15, 3, -5);
+    scene.add(cylinder);
+
+    camera.position.set(-30, 40, 30);
+    camera.lookAt(scene.position);
+
+    const ambiColor = "#0c0c0c";
+    const ambientLight = new THREE.AmbientLight(ambiColor);
+    scene.add(ambientLight);
+
+    const spotLight = new THREE.SpotLight(0xffffff);
+    spotLight.position.set(-40, 60, -10);
+    spotLight.castShadow = true;
+    spotLight.angle = 0.2;
+    spotLight.penumbra = 0.7;
+    spotLight.target = cube;
+    scene.add(new THREE.CameraHelper(spotLight.shadow.camera));
+    scene.add(spotLight);
+
+    const coneGeometry = new THREE.ConeGeometry(15, 100, 40);
+    const coneMaterial = new THREE.MeshLambertMaterial({ opacity: 0.3, color: 0x44ff44, transparent: true });
+    const cone = new THREE.Mesh(coneGeometry, coneMaterial);
+    cone.position.set(0, -50, 0);
+    const coneGroup = new THREE.Group();
+    coneGroup.add(cone);
+    coneGroup.position.copy(spotLight.position);
+    scene.add(coneGroup);
+
+    const pointLight = new THREE.PointLight(0xff00ff, 1, 50);
+    pointLight.position.set(0, 10, 0);
+    pointLight.castShadow = true;
+    scene.add(pointLight);
+
+    $("#WebGL-output").append(renderer.domElement);
+
+    let step = 0;
+
+    const controls = new function () {
+      this.rotationSpeed = 0.02;
+      this.bouncingSpeed = 0.03;
+      this.ambientColor = ambiColor;
+    }();
+
+    const gui = new dat.GUI();
+    gui.addColor(controls, "ambientColor").onChange(function (e) {
+      ambientLight.color = new THREE.Color(e);
+    });
+
+    render();
+
+    function updateConePosition() {
+      coneGroup.position.copy(spotLight.position);
+      const targetPos = spotLight.target.position;
+      coneGroup.rotation.z = -Math.atan((spotLight.position.x - targetPos.x) / (spotLight.position.y - targetPos.y));
+      coneGroup.rotation.x = Math.atan((spotLight.position.z - targetPos.z) / (spotLight.position.y - targetPos.y));
+    }
+
+    function render() {
+      stats.update();
+      cube.rotation.x += controls.rotationSpeed;
+      cube.rotation.y += controls.rotationSpeed;
+      torus.rotation.y += controls.rotationSpeed;
+      cylinder.rotation.z += controls.rotationSpeed;
+
+      step += controls.bouncingSpeed;
+      sphere.position.x = 20 + 10 * Math.cos(step);
+      sphere.position.y = 2 + 10 * Math.abs(Math.sin(step));
+      torus.position.y = 5 + 3 * Math.sin(step / 2);
+
+      spotLight.position.x = 50 * Math.cos(step / 4);
+      spotLight.position.z = 50 * Math.sin(step / 4);
+      updateConePosition();
+
+      pointLight.position.x = 30 * Math.cos(step / 2);
+      pointLight.position.z = 30 * Math.sin(step / 2);
+
+      requestAnimationFrame(render);
+      renderer.render(scene, camera);
+    }
+
+    function initStats() {
+      const stats = new Stats();
+      stats.setMode(0);
+      stats.domElement.style.position = "absolute";
+      stats.domElement.style.left = "0px";
+      stats.domElement.style.top = "0px";
+      $("#Stats-output").append(stats.domElement);
+      return stats;
+    }
+  </script>
+</body>
+</html>
